@@ -28,7 +28,7 @@ using namespace TQMesh::TQAlgorithm;
 /*********************************************************************
 * This example covers the generation of a simple triangular mesh
 *********************************************************************/
-void run_example_8()
+void run_example_9()
 {
   /*------------------------------------------------------------------
   | First, we define the size function. This function describes
@@ -37,7 +37,7 @@ void run_example_8()
   ------------------------------------------------------------------*/
   UserSizeFunction f = [](const Vec2d& p) 
   { 
-    return 0.25;
+    return 0.35;
   };
 
   /*------------------------------------------------------------------
@@ -49,72 +49,103 @@ void run_example_8()
   /*------------------------------------------------------------------
   | Exterior boundary
   ------------------------------------------------------------------*/
-  const double r = 1.0;
-
+  
+  /*------------------------------------------------------------------
+  | Now we define the exteriour boundary of the domain. The boundary 
+  | itself is created from four connected edges, which in turn are 
+  | defined by the four vertices v0, v1, v2 and v3.
+  | Our final exterior boundary will look like this:
+  |
+  |                   v3                 v2
+  |                     *---------------*
+  |                     |               |
+  |                     |               |
+  |                     |               |
+  |                     |               |
+  |                     |               |
+  |                     |               |
+  |                     |               |
+  |                     *---------------*
+  |                    v0                v1
+  |
+  | Notice the orientation of the edges (v0,v1), (v1,v2), (v2,v3) 
+  | and (v3,v0). 
+  | Exterior boundary edges must always be defined in counter-
+  | clockwise direction.
+  ------------------------------------------------------------------*/
   Boundary&  b_ext = domain.add_exterior_boundary();
 
-  std::vector<Vertex*> vertices {};
+  Vertex& v0 = domain.add_vertex(  0.0,  0.0 );
+  Vertex& v1 = domain.add_vertex(  5.0,  0.0 );
+  Vertex& v2 = domain.add_vertex(  5.0,  5.0 );
+  Vertex& v3 = domain.add_vertex(  0.0,  5.0 );
 
-  Vertex& v0 = domain.add_vertex( -2.0*r,  0.0*r );
-  vertices.push_back( &v0 );
-
-  const double delta_ang = M_PI / 32;
-  for (double ang = 0.0; ang <= M_PI; ang += delta_ang)
-  {
-    const double x = r * cos(M_PI-ang);
-    const double y = r * sin( ang);
-
-    Vertex& vi = domain.add_vertex( x, y, 1.0, 0.5 );
-    vertices.push_back( &vi );
-  }
-
-  Vertex& v1 = domain.add_vertex(  2.0*r,  0.0*r );
-  vertices.push_back( &v1 );
-
-  Vertex& v2 = domain.add_vertex(  2.0*r,  2.0*r );
-  vertices.push_back( &v2 );
-
-  Vertex& v3 = domain.add_vertex( -2.0*r,  2.0*r );
-  vertices.push_back( &v3 );
-
-
-  int n = static_cast<int>( vertices.size() );
-  for (size_t i = 0; i < vertices.size(); ++i)
-  {
-    int j = static_cast<int>( i );
-    int k = MOD(j+1, n);
-    Vertex* v_start = vertices[j];
-    Vertex* v_end = vertices[k];
-
-    LOG(INFO) << "EDGE: " << v_start->xy() << " -> " << v_end->xy();
-
-    b_ext.add_edge( *v_start, *v_end, 1 );
-  }
+  b_ext.add_edge( v0, v1, 1 );
+  b_ext.add_edge( v1, v2, 1 );
+  b_ext.add_edge( v2, v3, 1 );
+  b_ext.add_edge( v3, v0, 1 );
 
   /*------------------------------------------------------------------
-  | Generate mesh
+  | In this step, we will create an interior boundary, which has the 
+  | shape of a triangle.
+  |
+  |                   v3                 v2
+  |                     *---------------*
+  |                     |           v5  |
+  |                     |          *    |
+  |                     |         /|    |
+  |                     |       /  |    |
+  |                     |     /    |    |
+  |                     |    *-----*    |
+  |                     |   v4      v6  |
+  |                     *---------------*
+  |                    v0                v1
+  |
+  | This boundary is made up from the edges (v5,v6), (v6,v4), (v4,v5).
+  | Interior boundary edges must always be defined in clockwise 
+  | direction.
+  | At vertex v4, we will refine the mesh locally by adjusting its 
+  | sizing factor to 0.1. We also adjust the range to 1.5, in which 
+  | this lower sizing will be applied. 
+  ------------------------------------------------------------------*/
+  Boundary&  b_int = domain.add_interior_boundary();
+
+  double sizing = 0.1;
+  double range  = 1.5;
+
+  Vertex& v4 = domain.add_vertex(  1.5,  1.5, sizing, range );
+  Vertex& v5 = domain.add_vertex(  1.5,  3.5 );
+  Vertex& v6 = domain.add_vertex(  3.5,  3.5 );
+
+  b_int.add_edge( v4, v5, 2 );
+  b_int.add_edge( v5, v6, 2 );
+  b_int.add_edge( v6, v4, 2 );
+
+  /*------------------------------------------------------------------
+  | In the following lines, the mesh will be initialized, as well 
+  | as its advancing front structure (which is nescessary for the 
+  | mesh generation)
+  | After that, we simply triangulate the domain.
   ------------------------------------------------------------------*/
   Mesh mesh { domain };
   mesh.init_advancing_front();
-
-  mesh.create_quad_layers(*vertices[1], *vertices[n-4], 3, 0.01, 1.6);
-
   mesh.triangulate();
 
   /*------------------------------------------------------------------
-  | Smoother 
+  | Here we use a smoother, in order to improve the mesh quality.
+  | The smoothing is applied for four iterations. 
   ------------------------------------------------------------------*/
   Smoother smoother {};
   smoother.smooth(domain, mesh, 4);
 
   /*------------------------------------------------------------------
-  | Export
+  | Finally, the mesh is exportet to a file in VTU format.
   ------------------------------------------------------------------*/
   std::string source_dir { TQMESH_SOURCE_DIR };
   std::string file_name 
-  { source_dir + "/auxiliary/example_data/Example_8" };
+  { source_dir + "/auxiliary/example_data/Example_9" };
   LOG(INFO) << "Writing mesh output to: " << file_name << ".txt";
 
   mesh.write_to_file( file_name, ExportType::txt );
 
-} // run_example_8()
+} // run_example_9()
