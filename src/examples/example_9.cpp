@@ -31,105 +31,85 @@ using namespace TQMesh::TQAlgorithm;
 void run_example_9()
 {
   /*------------------------------------------------------------------
-  | First, we define the size function. This function describes
-  | the size of the mesh elements with respect to their location 
-  | in the domain. In this case, we use a constant size of 0.35
+  | Define the size function
   ------------------------------------------------------------------*/
   UserSizeFunction f = [](const Vec2d& p) 
   { 
-    return 0.35;
+    return 0.1;
   };
 
-  /*------------------------------------------------------------------
-  | Next, we need to define the domain. It requires the size function
-  | as argument.
-  ------------------------------------------------------------------*/
-  Domain domain { f };
+  Domain domain   { f };
 
   /*------------------------------------------------------------------
-  | Exterior boundary
-  ------------------------------------------------------------------*/
-  
-  /*------------------------------------------------------------------
-  | Now we define the exteriour boundary of the domain. The boundary 
-  | itself is created from four connected edges, which in turn are 
-  | defined by the four vertices v0, v1, v2 and v3.
-  | Our final exterior boundary will look like this:
+  | Build the mesh domain boundaries
   |
-  |                   v3                 v2
-  |                     *---------------*
-  |                     |               |
-  |                     |               |
-  |                     |               |
-  |                     |               |
-  |                     |               |
-  |                     |               |
-  |                     |               |
-  |                     *---------------*
-  |                    v0                v1
-  |
-  | Notice the orientation of the edges (v0,v1), (v1,v2), (v2,v3) 
-  | and (v3,v0). 
-  | Exterior boundary edges must always be defined in counter-
-  | clockwise direction.
+  |       v3                                             v2     
+  |      *----------------------------------------------* 
+  |      |      v5    v6                                |
+  |      |       *---*                                  |
+  |      |       |   |                                  |
+  |      |       *---*                                  |
+  |      |      v4    v7                                |
+  |      *----------------------------------------------*
+  |       v0                                             v1
   ------------------------------------------------------------------*/
   Boundary&  b_ext = domain.add_exterior_boundary();
-
-  Vertex& v0 = domain.add_vertex(  0.0,  0.0 );
-  Vertex& v1 = domain.add_vertex(  5.0,  0.0 );
-  Vertex& v2 = domain.add_vertex(  5.0,  5.0 );
-  Vertex& v3 = domain.add_vertex(  0.0,  5.0 );
-
-  b_ext.add_edge( v0, v1, 1 );
-  b_ext.add_edge( v1, v2, 1 );
-  b_ext.add_edge( v2, v3, 1 );
-  b_ext.add_edge( v3, v0, 1 );
-
-  /*------------------------------------------------------------------
-  | In this step, we will create an interior boundary, which has the 
-  | shape of a triangle.
-  |
-  |                   v3                 v2
-  |                     *---------------*
-  |                     |           v5  |
-  |                     |          *    |
-  |                     |         /|    |
-  |                     |       /  |    |
-  |                     |     /    |    |
-  |                     |    *-----*    |
-  |                     |   v4      v6  |
-  |                     *---------------*
-  |                    v0                v1
-  |
-  | This boundary is made up from the edges (v5,v6), (v6,v4), (v4,v5).
-  | Interior boundary edges must always be defined in clockwise 
-  | direction.
-  | At vertex v4, we will refine the mesh locally by adjusting its 
-  | sizing factor to 0.1. We also adjust the range to 1.5, in which 
-  | this lower sizing will be applied. 
-  ------------------------------------------------------------------*/
   Boundary&  b_int = domain.add_interior_boundary();
 
-  double sizing = 0.1;
-  double range  = 1.5;
+  // Exterior boundary
+  Vertex& v0 = domain.add_vertex(  0.0,  0.0, 1.0, 1.0 );
+  Vertex& v1 = domain.add_vertex(  4.0,  0.0, 1.0, 1.0 );
+  Vertex& v2 = domain.add_vertex(  4.0,  1.0, 1.0, 1.0 );
+  Vertex& v3 = domain.add_vertex(  0.0,  1.0, 1.0, 1.0 );
 
-  Vertex& v4 = domain.add_vertex(  1.5,  1.5, sizing, range );
-  Vertex& v5 = domain.add_vertex(  1.5,  3.5 );
-  Vertex& v6 = domain.add_vertex(  3.5,  3.5 );
+  Vertex& v4 = domain.add_vertex( 0.35, 0.35, 0.8, 1.2 );
+  Vertex& v5 = domain.add_vertex( 0.35, 0.65, 0.8, 1.2 );
+  Vertex& v6 = domain.add_vertex( 0.65, 0.65, 0.8, 1.2 );
+  Vertex& v7 = domain.add_vertex( 0.65, 0.35, 0.8, 1.2 );
 
-  b_int.add_edge( v4, v5, 2 );
-  b_int.add_edge( v5, v6, 2 );
-  b_int.add_edge( v6, v4, 2 );
+  b_ext.add_edge( v0, v1, 2 );
+  b_ext.add_edge( v1, v2, 3 );
+  b_ext.add_edge( v2, v3, 2 );
+  b_ext.add_edge( v3, v0, 1 );
+
+  // Interior boundary
+  b_int.add_edge( v4, v5, 4 );
+  b_int.add_edge( v5, v6, 4 );
+  b_int.add_edge( v6, v7, 4 );
+  b_int.add_edge( v7, v4, 4 );
 
   /*------------------------------------------------------------------
-  | In the following lines, the mesh will be initialized, as well 
-  | as its advancing front structure (which is nescessary for the 
-  | mesh generation)
-  | After that, we simply triangulate the domain.
+  | Initialize the mesh
   ------------------------------------------------------------------*/
   Mesh mesh { domain };
   mesh.init_advancing_front();
-  mesh.triangulate();
+
+  /*------------------------------------------------------------------
+  | Next we will create several quad layers at the following domain 
+  | boundary edges:
+  | 1) Edge (v0,v1)
+  | 2) Edge (v2,v3)
+  | 3) Edges (v4,v5), (v5,v6), (v6,v7), (v7,v4)
+  |    -> by providing vertex v5 twice to "create_quad_layers()",
+  |       all edge segments that are connected to v5 in a traversable
+  |       group will be used for the quad layer generation
+  ------------------------------------------------------------------*/
+  mesh.create_quad_layers(v0, v1, 3, 0.01, 2.0);
+  mesh.create_quad_layers(v2, v3, 3, 0.01, 2.0);
+  mesh.create_quad_layers(v4, v4, 3, 0.01, 1.3);
+
+  /*------------------------------------------------------------------
+  | Finally, we will create the mesh with the "paving()" method.
+  | It will create a mixed mesh that consists mainly of quads and 
+  | maybe some triangles 
+  ------------------------------------------------------------------*/
+  mesh.pave();
+
+  /*------------------------------------------------------------------
+  | In order to obtain a mesh that only consists of quad elements,
+  | we will refine the mesh
+  ------------------------------------------------------------------*/
+  mesh.refine_to_quads();
 
   /*------------------------------------------------------------------
   | Here we use a smoother, in order to improve the mesh quality.
