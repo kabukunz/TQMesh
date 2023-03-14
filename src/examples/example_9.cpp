@@ -35,7 +35,7 @@ void run_example_9()
   ------------------------------------------------------------------*/
   UserSizeFunction f = [](const Vec2d& p) 
   { 
-    return 0.1;
+    return 0.3;
   };
 
   Domain domain   { f };
@@ -94,9 +94,9 @@ void run_example_9()
   |       all edge segments that are connected to v5 in a traversable
   |       group will be used for the quad layer generation
   ------------------------------------------------------------------*/
-  mesh.create_quad_layers(v0, v1, 3, 0.01, 2.0);
-  mesh.create_quad_layers(v2, v3, 3, 0.01, 2.0);
-  mesh.create_quad_layers(v4, v4, 3, 0.01, 1.3);
+//   mesh.create_quad_layers(v0, v1, 3, 0.01, 2.0);
+//   mesh.create_quad_layers(v2, v3, 3, 0.01, 2.0);
+//   mesh.create_quad_layers(v4, v4, 3, 0.01, 1.3);
 
   /*------------------------------------------------------------------
   | Finally, we will create the mesh with the "paving()" method.
@@ -115,8 +115,8 @@ void run_example_9()
   | Here we use a smoother, in order to improve the mesh quality.
   | The smoothing is applied for four iterations. 
   ------------------------------------------------------------------*/
-  Smoother smoother {};
-  smoother.smooth(domain, mesh, 4);
+//   Smoother smoother {};
+//   smoother.smooth(domain, mesh, 4);
 
   /*------------------------------------------------------------------
   | Finally, the mesh is exportet to a file in VTU format.
