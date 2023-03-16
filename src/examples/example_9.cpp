@@ -35,7 +35,7 @@ void run_example_9()
   ------------------------------------------------------------------*/
   UserSizeFunction f = [](const Vec2d& p) 
   { 
-    return 0.3;
+    return 0.1;
   };
 
   Domain domain   { f };
@@ -54,29 +54,29 @@ void run_example_9()
   |       v0                                             v1
   ------------------------------------------------------------------*/
   Boundary&  b_ext = domain.add_exterior_boundary();
-  Boundary&  b_int = domain.add_interior_boundary();
+//   Boundary&  b_int = domain.add_interior_boundary();
 
   // Exterior boundary
-  Vertex& v0 = domain.add_vertex(  0.0,  0.0, 1.0, 1.0 );
-  Vertex& v1 = domain.add_vertex(  4.0,  0.0, 1.0, 1.0 );
-  Vertex& v2 = domain.add_vertex(  4.0,  1.0, 1.0, 1.0 );
-  Vertex& v3 = domain.add_vertex(  0.0,  1.0, 1.0, 1.0 );
+  Vertex& v0 = domain.add_vertex(  0.0,  0.0 );
+  Vertex& v1 = domain.add_vertex(  5.0,  0.0 );
+  Vertex& v2 = domain.add_vertex(  5.0,  5.0 );
+  Vertex& v3 = domain.add_vertex(  0.0,  5.0 );
 
-  Vertex& v4 = domain.add_vertex( 0.35, 0.35, 0.8, 1.2 );
-  Vertex& v5 = domain.add_vertex( 0.35, 0.65, 0.8, 1.2 );
-  Vertex& v6 = domain.add_vertex( 0.65, 0.65, 0.8, 1.2 );
-  Vertex& v7 = domain.add_vertex( 0.65, 0.35, 0.8, 1.2 );
+//   Vertex& v4 = domain.add_vertex( 0.35, 0.35, 0.8, 1.2 );
+//   Vertex& v5 = domain.add_vertex( 0.35, 0.65, 0.8, 1.2 );
+//   Vertex& v6 = domain.add_vertex( 0.65, 0.65, 0.8, 1.2 );
+//   Vertex& v7 = domain.add_vertex( 0.65, 0.35, 0.8, 1.2 );
 
-  b_ext.add_edge( v0, v1, 2 );
-  b_ext.add_edge( v1, v2, 3 );
-  b_ext.add_edge( v2, v3, 2 );
+  b_ext.add_edge( v0, v1, 1 );
+  b_ext.add_edge( v1, v2, 1 );
+  b_ext.add_edge( v2, v3, 1 );
   b_ext.add_edge( v3, v0, 1 );
 
-  // Interior boundary
-  b_int.add_edge( v4, v5, 4 );
-  b_int.add_edge( v5, v6, 4 );
-  b_int.add_edge( v6, v7, 4 );
-  b_int.add_edge( v7, v4, 4 );
+//   // Interior boundary
+//   b_int.add_edge( v4, v5, 4 );
+//   b_int.add_edge( v5, v6, 4 );
+//   b_int.add_edge( v6, v7, 4 );
+//   b_int.add_edge( v7, v4, 4 );
 
   /*------------------------------------------------------------------
   | Initialize the mesh
@@ -115,8 +115,8 @@ void run_example_9()
   | Here we use a smoother, in order to improve the mesh quality.
   | The smoothing is applied for four iterations. 
   ------------------------------------------------------------------*/
-//   Smoother smoother {};
-//   smoother.smooth(domain, mesh, 4);
+  Smoother smoother {};
+  smoother.smooth(domain, mesh, 4);
 
   /*------------------------------------------------------------------
   | Finally, the mesh is exportet to a file in VTU format.
