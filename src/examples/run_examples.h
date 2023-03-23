@@ -28,3 +28,4 @@ void run_example_7();
 void run_example_8();
 void run_example_9();
 void run_example_10();
+void run_example_11();
