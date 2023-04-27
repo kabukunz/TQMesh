@@ -43,7 +43,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wunused-variable")
   endif()
   # FIXME: clang: error: the clang compiler does not support -pg option on versions of OS X 10.9 and later
-  #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+  #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg") 
 endif()
 
 # Add config file
